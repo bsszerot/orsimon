@@ -1,0 +1,43 @@
+<HTML>
+<HEAD></HEAD>
+<BODY>
+<STYLE>
+BODY { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; background: navy; }
+A.ptit:link    { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A.ptit:active  { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A.ptit:hover   { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A.ptit:visited { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A:link    { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+A:active  { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+A:hover   { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+A:visited { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+</STYLE>
+<BR>
+<P><A CLASS="ptit" HREF="http://oracle.zerot.ru/about.shtml" TARGET="cont">ОрСиМОН БЕССТ</A></P>
+
+<P>ОБЩИЕ
+<BR>&nbsp;
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/set_session_settings.cgi" TARGET="cont">&nbsp;&nbsp;Установка текущей БД</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/undrcnst.shtml" TARGET="cont">&nbsp;&nbsp;История создания</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/about.shtml" TARGET="cont">&nbsp;&nbsp;Описание продукта</A>
+<BR>&nbsp;
+</P>
+
+<P><A TITLE="Формы отражают общие конфигурационные сведения"
+      HREF="http://oracle.zerot.ru/menu.configuration.shtml" TARGET="menu">Конфигурация</A>
+<BR><A TITLE="Формы отражают текущие данные административных представлений или данные срезов Statspack или BESTAT"
+       HREF="http://oracle.zerot.ru/menu.monitor.shtml" TARGET="menu">Мониторинг</A>
+<BR><A TITLE="Формы отражают текущие данные административных представлений или данные срезов Statspack или BESTAT"
+       HREF="http://oracle.zerot.ru/menu.statistics.shtml" TARGET="menu">Срезы статистики</A>
+<BR><A TITLE="Формы отражают дельты значений, расчитанные коллектором статистик CLC BESTAT"
+       HREF="http://oracle.zerot.ru/menu.collector.shtml" TARGET="menu">Коллектор статистик</A>
+<BR><A TITLE="Формы отражают результат работы аналитических модулей"
+       HREF="http://oracle.zerot.ru/menu.analitica.shtml" TARGET="menu">Аналитика</A>
+<BR>&nbsp;
+
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_sysevents_top_from_collector.cgi?order_field=SUM_TWM" TARGET="cont">&nbsp;&nbsp;DB События экземпляра</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_analyze_analitic_points.cgi?order_field=CR_SNAP_ID" TARGET="cont">&nbsp;&nbsp;DB Статистика экземпляра</A>
+<BR>&nbsp;
+</P>
+</BODY>
+</HTML>

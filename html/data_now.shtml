@@ -1,0 +1,92 @@
+<HTML>
+<HEAD></HEAD>
+<BODY>
+<STYLE>
+BODY { font-family: sans-serif; font-size: 10pt; text-align: justify; }
+A.ptit:link    { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A.ptit:active  { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A.ptit:hover   { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A.ptit:visited { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A:link    { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+A:active  { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+A:hover   { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+A:visited { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+TD.HEAD { font-size: 10pt; font-family: sans-serif ; padding: 2pt; text-align: center; }
+TD.NUMDATA { font-size: 10pt; font-family: sans-serif ; padding: 2pt; text-align: right; }
+TD.SZDATA { font-size: 10pt; font-family: sans-serif ; padding: 2pt; text-align: left; }
+TD.CENTERDATA { font-size: 10pt; font-family: sans-serif ; padding: 2pt; text-align: center; }
+LI { font-size: 10pt; font-family: sans-serif ; padding: 2pt; text-align: justify; }
+</STYLE>
+<TABLE CELLPADDING="3pt" CELLSPACING="3pt" BORDER="2" STYLE="border: 2pt solid navy; width: 100%;">
+       <TR><TD STYLE="text-align: center; font-size: 14pt; border: none; color: white; background-color: navy ;">Документирование ОрСиМОН БЕССТ</TD></TR>
+       <TR><TD STYLE="text-align: left; font-size: 12pt; border: none; color: navy; background-color: white ;">Основы и начальное конфигурирование</TD></TR>
+</TABLE>
+<BR>
+<P>Программно технологический комплекс (ПТК) ОрСиМОН БЕССТ предназначена для осуществления мониторинга операционных систем семейства UNIX и различных СУБД 
+ (в т.ч. Oracle и Postgree SQL), автоматизации сбора статистики ОС и СУБД, агрегирования и последующей аналитики собранной информации. Основой создаваемого
+ продукта является разрабатываемая автором как часть продукта методологическая база и технологическая база</P>
+
+<P>Формально ПТК разделен на следующие функциональные модули:</P>
+<UL>
+<LI>Модуль консоли конфигурации - обеспечивает отображение конфигурации выбранной ОС или СУБД в разрезе по компонентам ОС и объектам СУБД</LI>
+<LI>Модуль монитора текущего состояния ОС и СУБД - обеспечивает мониторинг параметров реального времени для выбранной ОС или СУБД, а также сводный 
+ контроль по всем охватываемым системам</LI>
+<LI>Модуль коллектора и консоли статистик - обеспечивает накопление статистик ОС и СУБД в соответствии сконфигурированным политикам и орображение 
+ статистик для текущего среза или же любого из сохраненных коллектором срезов</LI>
+<LI>Модуль аналитики - обеспечивает вычисление разницы между сохраненными коллектором "срезами" и последующую аналитику полученных "разничных" 
+ параметров</LI>
+</UL>
+
+<P>Текущая версия ОрСиМОН БЕССТ предназначена для работы под управлением CentOS Linux v.5.1. Для подготовки системы к работе необходимо провести ряд 
+ мероприятий, описанных в разделе далее </P>
+
+<UL>
+<LI>Необходимо установить клиента Oracle и разрешить соединение с подлежащими мониторингу серверами Oracle по SQLNet с IP адресом хоста, на котором 
+ расположено ПО монитора</LI>
+<LI>Также необходимо в каждой базе, подлежащей мониторингу, создать пользователя для коннектора и выдатеь ему соответствующие привелегии. Пример команд: 
+    <UL>
+    <LI>Общие (пользователь и просмотр словаря)
+        <UL>
+        <LI>create user bestat default tablespace USERS temporary tablespace TEMP quota unlimited on USERS profile default identified by qwe123rt ;</LI>
+        <LI>grant create session, select any dictionary, select any table to bestat ;</LI>
+        </UL>
+    </LI>
+    <LI>Для модуля отображения блокировок процедур
+        <UL>
+        <LI>create view bestat_kglob as select * from X_$KGLOB ;</LI>
+        <LI>grant select on sys.bestat_kglob to bestat ;</LI>
+        <LI>create view bestat_kglpn as select * from X_$KGLPN ;</LI>
+        <LI>grant select on sys.bestat_kglpn to bestat ;</LI>
+        </UL>
+    </LI>    
+    <LI>Для создания и заполнения данных коллектором статистики
+        <UL>
+        <LI>alter user bestat quota unlimited on stat ;
+        <LI>grant select any table, create procedure, create table, create sequence, create view, create index to bestat ;
+        </UL>
+    </LI>  
+    </UL>
+</LI>
+<LI>Необходимо установить модули Perl-DBI, Perl-DBD-Oracle, GD, Perl-GD-graph. Большая часть модулей доступна в APT репозитарии для CentOS, DBDOracle 
+ необходимо установить вручную</LI>
+<LI>Необходимо прописать сторки коннектора в tnsnames.ora клиента Oracle и добавить описание коннекторов в конфигурационный файл</LI>
+<LI>Управление задачами на удаленных машинах может потребоваться для запуска процедур создания статистических срезов, обработки статистики ОС и других. 
+    Запуск процедур может быть реализован двумя методами:
+    <UL>
+    <LI>системным или оракловым (DBMS_JOBS) планировщиком удалённой машины</LI>
+    <LI>локальным планировщиком с размещенным монитором. Во втором случае для отработки комынд на удаленной машине 
+        рекомендуется использовать ssh с авторизацией по ключу (беспарольной). Для конфигурирования авторизации поключу необходимо:
+        <UL>
+        <LI>Сгенерировать ключи для пользователя, который будет выполнять задачи на удалённых машинах. Используется команда ssh-keygen, формирующая пару ключей</LI>
+        <LI>На удалённой машине добавить содержимое сгенерированного предидущим шагом публичного (не приватного) ключа в файл authorized_keys, в подкаталог .ssh
+            домашнего каталога пользователя, от имени которого должны исполняться команды</LI>
+        <LI>в дальнейшем запуск удалённой команды может выполняться способом, описанным в комментариях файла ./../db_objects/execute_ops.cmd</LI>
+        </UL>
+    </LI>
+    </UL>
+</LI>
+</UL>
+
+<HR COLOR="navy"><P STYLE="font-size 8pt; text-align: center;">(C) 2000-2008 Sergey S. Belonin. All rights reserved</P>
+</BODY>
+</HTML>

@@ -1,0 +1,65 @@
+<HTML>
+<HEAD></HEAD>
+<BODY>
+<STYLE>
+BODY { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; background: navy; }
+A.ptit:link    { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A.ptit:active  { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A.ptit:hover   { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A.ptit:visited { font-family: sans-serif; font-size: 14pt; text-align: justify; color: white; text-decoration: none; font-weight: bold; }
+A:link    { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+A:active  { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+A:hover   { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+A:visited { font-family: sans-serif; font-size: 10pt; text-align: justify; color: white; text-decoration: none; }
+</STYLE>
+<BR>
+<P><A CLASS="ptit" HREF="http://oracle.zerot.ru/about.shtml" TARGET="cont">ОрСиМОН БЕССТ</A></P>
+
+<P>ОБЩИЕ
+<BR>&nbsp;
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/set_session_settings.cgi" TARGET="cont">&nbsp;&nbsp;Установка текущей БД</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/undrcnst.shtml" TARGET="cont">&nbsp;&nbsp;История создания</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/about.shtml" TARGET="cont">&nbsp;&nbsp;Описание продукта</A>
+<BR>&nbsp;
+</P>
+
+<P><A TITLE="Формы отражают общие конфигурационные сведения"
+      HREF="http://oracle.zerot.ru/menu.configuration.shtml" TARGET="menu">Конфигурация</A>
+<BR><A TITLE="Формы отражают текущие данные административных представлений или данные срезов Statspack или BESTAT"
+       HREF="http://oracle.zerot.ru/menu.monitor.shtml" TARGET="menu">Мониторинг</A>
+<BR><A TITLE="Формы отражают текущие данные административных представлений или данные срезов Statspack или BESTAT"
+       HREF="http://oracle.zerot.ru/menu.statistics.shtml" TARGET="menu">Срезы статистики</A>
+<BR>&nbsp;
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_os_stats_linux_cpus.cgi" TARGET="cont">&nbsp;&nbsp;Статистика OS Linux</A>
+<BR>&nbsp;
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_tablespaces_utilization.cgi?order_field=TABLESPACE_NAME" TARGET="cont">&nbsp;&nbsp;DB Объём и I/O TBS</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_files_iostat.cgi?order_field=TABLESPACE_NAME" TARGET="cont">&nbsp;&nbsp;DB  Объём и I/O файлов</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_segments_utilization.cgi?order_field=FREE_EXT_PERCENT" TARGET="cont">&nbsp;&nbsp;DB Объём и I/O сегментов</A>
+
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_sga_stat.cgi?order_field=TYPE,NAME" TARGET="cont">&nbsp;&nbsp;DB Утилизация SGA</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_pga_stat.cgi?order_field=NAME" TARGET="cont">&nbsp;&nbsp;DB Утилизация PGA</A>
+
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_sessions_list.cgi?order_field=s.SID" TARGET="cont">&nbsp;&nbsp;DB Текущие сессии</A>                      
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_dml_locks_with_waits.cgi?order_field=l.SID" TARGET="cont">&nbsp;&nbsp;DB Текущие блокировки</A>           
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_sql_area_info.cgi?order_field=s.ADDRESS" TARGET="cont">&nbsp;&nbsp;DB Текущие курсоры</A>                 
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_data_from_table_view.cgi?owner=SYS&name=V$TRANSACTION&sz_num=300&is_second=yes" TARGET="cont">&nbsp;&nbsp;DB Текущие транзакции</A>  
+
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_dbgeneral_controlfile.cgi?order_field=TYPE" TARGET="cont">&nbsp;&nbsp;DB Контрольные файлы</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_redolog_utilization.cgi?order_field=POINT" TARGET="cont">&nbsp;&nbsp;DB Оперативные журналы</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_archivelogs_list.cgi?order_field=RECID" TARGET="cont">&nbsp;&nbsp;DB Архивные журналы</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_undo_undostat.cgi?order_field=BEGIN_TIME" TARGET="cont">&nbsp;&nbsp;DB Пространства UNDO</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_temp_lmt_usage.cgi?order_field=BYTES_USED" TARGET="cont">&nbsp;&nbsp;DB Пространства TEMP</A>
+
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_system_waits.cgi?order_field=s.SID" TARGET="cont">&nbsp;&nbsp;DB Ожидания сессий</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_sessions_events.cgi?order_field=s.SID" TARGET="cont">&nbsp;&nbsp;DB События сессий</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_sessions_stats.cgi?order_field=s.SID" TARGET="cont">&nbsp;&nbsp;DB Статистики сессий</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_system_events.cgi?order_field=se.EVENT" TARGET="cont">&nbsp;&nbsp;DB События экземпляра</A>
+<BR>&nbsp;<A HREF="http://oracle.zerot.ru/cgi/get_system_stats.cgi?order_field=NAME" TARGET="cont">&nbsp;&nbsp;DB Статистика экземпляра</A>
+<BR>&nbsp;
+<BR><A TITLE="Формы отражают дельты значений, расчитанные коллектором статистик CLC BESTAT"
+       HREF="http://oracle.zerot.ru/menu.collector.shtml" TARGET="menu">Коллектор статистик</A>
+<BR><A TITLE="Формы отражают результат работы аналитических модулей"
+       HREF="http://oracle.zerot.ru/menu.analitica.shtml" TARGET="menu">Аналитика</A>
+</P>
+</BODY>
+</HTML>

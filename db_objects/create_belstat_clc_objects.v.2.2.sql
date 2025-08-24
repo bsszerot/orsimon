@@ -1,0 +1,733 @@
+
+spool infotable.log ;
+ --
+-- ВНИМАНИМЕ Настоящая процедура является частью коммерческого программного продукта ОрСиМОН БЕССТ (С) Sergey S. Belonin Все права защищены.
+-- Использование настоящего кода без заключения письменного лицензионного соглашения с правообладателем или правомочным сублицензиаром ЗАПРЕЩЕНО
+-- ATTENTION This procedure are part of commercial software product OrSiMON BESST (C) Sergey S. Belonin All rights reserved
+-- Before use this procedure you must sign license agreement with owner or sublicensear
+--
+
+-- ##########################################################################################################
+-- ##########################################################################################################
+-- # объекты и процедуры "первой" очереди - коллектора статистик
+-- ##########################################################################################################
+-- ##########################################################################################################
+
+
+DROP SEQUENCE CLC_STATISTIC_POINTS_SEQ ;
+CREATE SEQUENCE CLC_STATISTIC_POINTS_SEQ START WITH 1 INCREMENT BY 1 NOMAXVALUE ;
+
+DROP TABLE CLC_STATISTIC_POINTS ;
+CREATE TABLE CLC_STATISTIC_POINTS (
+       POINT_ID         NUMBER,
+       STATISTIC_TYPE   VARCHAR2(32), 
+       FILIAL_NAME      VARCHAR2(32), 
+       SERVER_IP        VARCHAR2(16), 
+       DB_NAME          VARCHAR2(9), 
+       DB_DESCRIPTION   VARCHAR2(64),
+       PREV_MAX_SNAP_ID NUMBER,
+       CURR_MAX_SNAP_ID NUMBER,
+       IS_ENABLED VARCHAR2(4),
+       POINT_TYPE VARCHAR2(64),
+       BACKUP_TYPE VARCHAR2(64),
+       BACKUP_LOG VARCHAR2(1000),
+       BACKUP_PATH VARCHAR2(1000),
+       INSTANCE_VERSION VARCHAR2(17),
+       OS_TYPE VARCHAR2(17),
+       CONNECT_TYPE VARCHAR2(17),
+       USE_STATSPACK VARCHAR2(3) ) TABLESPACE BELSTAT COMPRESS ;
+
+INSERT INTO CLC_STATISTIC_POINTS VALUES (0,'from statspack','local dbs','127.0.0.1','TEST1','TEST1',0,0,'yes','in db','','','','','','','yes') ; 
+
+-- ALTER TABLE CLC_STATISTIC_POINTS ADD (IS_ENABLED VARCHAR2(4)) ;
+-- ALTER TABLE CLC_STATISTIC_POINTS ADD (POINT_TYPE VARCHAR2(64)) ;
+-- ALTER TABLE CLC_STATISTIC_POINTS ADD (BACKUP_TYPE VARCHAR2(64)) ;
+-- ALTER TABLE CLC_STATISTIC_POINTS ADD (BACKUP_LOG VARCHAR2(1000)) ;
+-- ALTER TABLE CLC_STATISTIC_POINTS ADD (BACKUP_PATH VARCHAR2(1000)) ;
+-- ALTER TABLE CLC_STATISTIC_POINTS ADD (INSTANCE_VERSION VARCHAR2(17)) ;
+-- ALTER TABLE CLC_STATISTIC_POINTS ADD (OS_TYPE VARCHAR2(17)) ;
+-- ALTER TABLE CLC_STATISTIC_POINTS ADD (CONNECT_TYPE VARCHAR2(17)) ;
+-- ALTER TABLE CLC_STATISTIC_POINTS ADD (USE_STATSPACK VARCHAR2(3)) ;
+
+DROP TABLE CLC_DELTA_SYSSTAT ;
+CREATE TABLE CLC_DELTA_SYSSTAT (
+       POINT_ID     NUMBER,
+       SNAP_LEVEL   NUMBER,
+       CR_SNAP_ID   NUMBER(6),
+       CR_SNAP_TIME DATE,
+       PR_SNAP_ID   NUMBER(6),
+       PR_SNAP_TIME DATE,
+       STATISTIC#   NUMBER,
+       CR_VALUE     NUMBER,
+       PR_VALUE     NUMBER,
+       DIFFERENCE   NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+-- 20101110 добавлено поля веса (процента времени ожидания) для отдельного события от времени периода и времени нефиктивных ожиданий
+DROP TABLE CLC_DELTA_SYSEVENT ;
+CREATE TABLE CLC_DELTA_SYSEVENT (
+       POINT_ID             NUMBER,
+       SNAP_LEVEL           NUMBER,
+       CR_SNAP_ID           NUMBER(6),
+       CR_SNAP_TIME         DATE,
+       PR_SNAP_ID           NUMBER(6),
+       PR_SNAP_TIME         DATE,
+       EVENT#               NUMBER,
+       CR_TOTAL_WAITS       NUMBER,
+       CR_TOTAL_TIMEOUTS    NUMBER,
+       CR_TIME_WAITED_MICRO NUMBER,
+       PR_TOTAL_WAITS       NUMBER,
+       PR_TOTAL_TIMEOUTS    NUMBER,
+       PR_TIME_WAITED_MICRO NUMBER,
+       diff_tw              NUMBER,
+       diff_tt              NUMBER,
+       diff_twm             NUMBER,
+       PERALL_WT_PERCENT    NUMBER,
+       PER_NOF_WT_PERCENT   NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+CREATE INDEX CLC_DELTA_SYSSTAT_I1 ON CLC_DELTA_SYSSTAT (POINT_ID,CR_SNAP_TIME,STATISTIC#) ;
+CREATE INDEX CLC_DELTA_SYSSTAT_I2 ON CLC_DELTA_SYSSTAT (POINT_ID,CR_SNAP_ID,STATISTIC#) ;
+CREATE INDEX CLC_DELTA_SYSEVENT_I1 ON CLC_DELTA_SYSEVENT (POINT_ID,CR_SNAP_TIME,EVENT#) ;
+CREATE INDEX CLC_DELTA_SYSEVENT_I2 ON CLC_DELTA_SYSEVENT (POINT_ID,CR_SNAP_ID,EVENT#) ;
+
+-- справочные данные, зависимые от версии Oracle
+
+DROP TABLE CLC_STATNAME_11I ;
+DROP TABLE CLC_EVENTNAME_11I ;
+CREATE TABLE CLC_STATNAME_11I AS SELECT * FROM SYS.V$STATNAME ;
+CREATE TABLE CLC_EVENTNAME_11I AS SELECT * FROM SYS.V$EVENT_NAME ;
+
+-- (+ коллектор + интерфейс)
+DROP TABLE CLC_DELTA_LIBRARYCACHE ;
+CREATE TABLE CLC_DELTA_LIBRARYCACHE (
+       POINT_ID                       NUMBER,
+       SNAP_LEVEL                     NUMBER,
+       CR_SNAP_ID                     NUMBER(6),
+       CR_SNAP_TIME                   DATE,
+       PR_SNAP_ID                     NUMBER(6),
+       PR_SNAP_TIME                   DATE,
+       NAMESPACE                      VARCHAR2(15), 
+       CR_GETS                        NUMBER,
+       PR_GETS                        NUMBER,
+       DIFF_GETS                      NUMBER,
+       CR_GETHITS                     NUMBER,
+       PR_GETHITS                     NUMBER,
+       DIFF_GETHITS                   NUMBER,
+       CR_PINS                        NUMBER,
+       PR_PINS                        NUMBER,
+       DIFF_PINS                      NUMBER,
+       CR_PINHITS                     NUMBER,
+       PR_PINHITS                     NUMBER,
+       DIFF_PINHITS                   NUMBER,
+       CR_RELOADS                     NUMBER,
+       PR_RELOADS                     NUMBER,
+       DIFF_RELOADS                   NUMBER,
+       CR_INVALIDATIONS               NUMBER,
+       PR_INVALIDATIONS               NUMBER,
+       DIFF_INVALIDATIONS             NUMBER,
+       CR_DLM_LOCK_REQUESTS           NUMBER,
+       PR_DLM_LOCK_REQUESTS           NUMBER,
+       DIFF_DLM_LOCK_REQUESTS         NUMBER,
+       CR_DLM_PIN_REQUESTS            NUMBER,
+       PR_DLM_PIN_REQUESTS            NUMBER,
+       DIFF_DLM_PIN_REQUESTS          NUMBER,
+       CR_DLM_PIN_RELEASES            NUMBER,
+       PR_DLM_PIN_RELEASES            NUMBER,
+       DIFF_DLM_PIN_RELEASES          NUMBER,
+       CR_DLM_INVALIDATION_REQUESTS   NUMBER,
+       PR_DLM_INVALIDATION_REQUESTS   NUMBER,
+       DIFF_DLM_INVALIDATION_REQUESTS NUMBER,
+       CR_DLM_INVALIDATIONS           NUMBER,
+       PR_DLM_INVALIDATIONS           NUMBER,
+       DIFF_DLM_INVALIDATIONS         NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+--(+ коллектор - интерфейс)
+DROP TABLE CLC_DELTA_BUFF_POOL_STAT ;
+CREATE TABLE CLC_DELTA_BUFF_POOL_STAT (
+       POINT_ID                       NUMBER,
+       SNAP_LEVEL                     NUMBER,
+       CR_SNAP_ID                     NUMBER(6),
+       CR_SNAP_TIME                   DATE,
+       PR_SNAP_ID                     NUMBER(6),
+       PR_SNAP_TIME                   DATE,
+       ID                             NUMBER,
+       NAME                           VARCHAR2(20),
+       BLOCK_SIZE                     NUMBER,
+       CR_SET_MSIZE                   NUMBER,
+       PR_SET_MSIZE                   NUMBER,
+       DIFF_SET_MSIZE                 NUMBER,
+       CR_CNUM_REPL                   NUMBER,
+       PR_CNUM_REPL                   NUMBER,
+       DIFF_CNUM_REPL                 NUMBER,
+       CR_CNUM_WRITE                  NUMBER,
+       PR_CNUM_WRITE                  NUMBER,
+       DIFF_CNUM_WRITE                NUMBER,
+       CR_CNUM_SET                    NUMBER,
+       PR_CNUM_SET                    NUMBER,
+       DIFF_CNUM_SET                  NUMBER,
+       CR_BUF_GOT                     NUMBER,
+       PR_BUF_GOT                     NUMBER,
+       DIFF_BUF_GOT                   NUMBER,
+       CR_SUM_WRITE                   NUMBER,
+       PR_SUM_WRITE                   NUMBER,
+       DIFF_SUM_WRITE                 NUMBER,
+       CR_SUM_SCAN                    NUMBER,
+       PR_SUM_SCAN                    NUMBER,
+       DIFF_SUM_SCAN                  NUMBER,
+       CR_FREE_BUFFER_WAIT            NUMBER,
+       PR_FREE_BUFFER_WAIT            NUMBER,
+       DIFF_FREE_BUFFER_WAIT          NUMBER,
+       CR_WRITE_COMPLETE_WAIT         NUMBER,
+       PR_WRITE_COMPLETE_WAIT         NUMBER,
+       DIFF_WRITE_COMPLETE_WAIT       NUMBER,
+       CR_BUFFER_BUSY_WAIT            NUMBER,
+       PR_BUFFER_BUSY_WAIT            NUMBER,
+       DIFF_BUFFER_BUSY_WAIT          NUMBER,
+       CR_FREE_BUFFER_INSPECTED       NUMBER,
+       PR_FREE_BUFFER_INSPECTED       NUMBER,
+       DIFF_FREE_BUFFER_INSPECTED     NUMBER,
+       CR_DIRTY_BUFFERS_INSPECTED     NUMBER,
+       PR_DIRTY_BUFFERS_INSPECTED     NUMBER,
+       DIFF_DIRTY_BUFFERS_INSPECTED   NUMBER,
+       CR_DB_BLOCK_CHANGE             NUMBER,
+       PR_DB_BLOCK_CHANGE             NUMBER,
+       DIFF_DB_BLOCK_CHANGE           NUMBER,
+       CR_DB_BLOCK_GETS               NUMBER,
+       PR_DB_BLOCK_GETS               NUMBER,
+       DIFF_DB_BLOCK_GETS             NUMBER,
+       CR_CONSISTENT_GETS             NUMBER,
+       PR_CONSISTENT_GETS             NUMBER,
+       DIFF_CONSISTENT_GETS           NUMBER,
+       CR_PHYSICAL_READS              NUMBER,
+       PR_PHYSICAL_READS              NUMBER,
+       DIFF_PHYSICAL_READS            NUMBER,
+       CR_PHYSICAL_WRITES             NUMBER,
+       PR_PHYSICAL_WRITES             NUMBER,
+       DIFF_PHYSICAL_WRITES           NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+DROP TABLE CLC_DELTA_DB_CACHE_ADVICE ;
+CREATE TABLE CLC_DELTA_DB_CACHE_ADVICE (
+       POINT_ID                       NUMBER,
+       SNAP_LEVEL                     NUMBER,
+       CR_SNAP_ID                     NUMBER(6),
+       CR_SNAP_TIME                   DATE,
+       PR_SNAP_ID                     NUMBER(6),
+       PR_SNAP_TIME                   DATE,
+       ID                             NUMBER,
+       NAME                           VARCHAR2(20),
+       BLOCK_SIZE                     NUMBER,
+       CR_ADVICE_STATUS               VARCHAR2(3),
+       PR_ADVICE_STATUS               VARCHAR2(3),
+       CR_SIZE_FOR_ESTIMATE           NUMBER,
+       PR_SIZE_FOR_ESTIMATE           NUMBER,
+       DIFF_SIZE_FOR_ESTIMATE         NUMBER,
+       CR_SIZE_FACTOR                 NUMBER,
+       PR_SIZE_FACTOR                 NUMBER,
+       DIFF_SIZE_FACTOR               NUMBER,
+       CR_BUFFERS_FOR_ESTIMATE        NUMBER,
+       PR_BUFFERS_FOR_ESTIMATE        NUMBER,
+       DIFF_BUFFERS_FOR_ESTIMATE      NUMBER,
+       CR_ESTD_PHYSICAL_READ_FACTOR   NUMBER,
+       PR_ESTD_PHYSICAL_READ_FACTOR   NUMBER,
+       DIFF_ESTD_PHYSICAL_READ_FACTOR NUMBER,
+       CR_ESTD_PHYSICAL_READS         NUMBER,
+       PR_ESTD_PHYSICAL_READS         NUMBER,
+       DIFF_ESTD_PHYSICAL_READS       NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+DROP TABLE CLC_DELTA_PGASTAT ;
+CREATE TABLE CLC_DELTA_PGASTAT (
+       POINT_ID     NUMBER,
+       SNAP_LEVEL   NUMBER,
+       CR_SNAP_ID   NUMBER(6),
+       CR_SNAP_TIME DATE,
+       PR_SNAP_ID   NUMBER(6),
+       PR_SNAP_TIME DATE,
+       NAME         VARCHAR2(64),
+       CR_VALUE     NUMBER,
+       PR_VALUE     NUMBER,
+       DIFF_VALUE   NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+
+-- !!!
+DROP TABLE CLC_DELTA_PGA_TARGET_ADVICE ;
+CREATE TABLE CLC_DELTA_PGA_TARGET_ADVICE (
+       POINT_ID                           NUMBER,
+       SNAP_LEVEL                         NUMBER,
+       CR_SNAP_ID                         NUMBER(6),
+       CR_SNAP_TIME                       DATE,
+       PR_SNAP_ID                         NUMBER(6),
+       PR_SNAP_TIME                       DATE,
+       PGA_TARGET_FOR_ESTIMATE            NUMBER,
+       PGA_TARGET_FACTOR                  NUMBER,
+       ADVICE_STATUS                      VARCHAR2(3),
+       BYTES_PROCESSED                    NUMBER,
+       CR_ESTD_EXTRA_BYTES_RW             NUMBER,
+       PR_ESTD_EXTRA_BYTES_RW             NUMBER,
+       DIFF_ESTD_EXTRA_BYTES_RW           NUMBER,
+       CR_ESTD_PGA_CACHE_HIT_PRC          NUMBER,
+       PR_ESTD_PGA_CACHE_HIT_PRC          NUMBER,
+       DIFF_ESTD_PGA_CACHE_HIT_PRC        NUMBER,
+       CR_ESTD_OVERALLOC_COUNT            NUMBER,
+       PR_ESTD_OVERALLOC_COUNT            NUMBER,
+       DIFF_ESTD_OVERALLOC_COUNT          NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+DROP TABLE CLC_DELTA_ROWCACHE ;
+CREATE TABLE CLC_DELTA_ROWCACHE (
+       POINT_ID           NUMBER,
+       SNAP_LEVEL         NUMBER,
+       CR_SNAP_ID         NUMBER(6),
+       CR_SNAP_TIME       DATE,
+       PR_SNAP_ID         NUMBER(6),
+       PR_SNAP_TIME       DATE,
+       PARAMETER          VARCHAR2(32),
+       CR_TOTAL_USAGE     NUMBER,
+       PR_TOTAL_USAGE     NUMBER,
+       DIFF_TOTAL_USAGE   NUMBER,
+       CR_USAGE           NUMBER,
+       PR_USAGE           NUMBER,
+       DIFF_USAGE         NUMBER,
+       CR_GETS            NUMBER,
+       PR_GETS            NUMBER,
+       DIFF_GETS          NUMBER,
+       CR_GETMISSES       NUMBER,
+       PR_GETMISSES       NUMBER,
+       DIFF_GETMISSES     NUMBER,
+       CR_SCANS           NUMBER,
+       PR_SCANS           NUMBER,
+       DIFF_SCANS         NUMBER,
+       CR_SCANMISSES      NUMBER,
+       PR_SCANMISSES      NUMBER,
+       DIFF_SCANMISSES    NUMBER,
+       CR_SCANCOMPLETES   NUMBER,
+       PR_SCANCOMPLETES   NUMBER,
+       DIFF_SCANCOMPLETES NUMBER,
+       CR_MODIFICATIONS   NUMBER,
+       PR_MODIFICATIONS   NUMBER,
+       DIFF_MODIFICATIONS NUMBER,
+       CR_FLUSHES         NUMBER,
+       PR_FLUSHES         NUMBER,
+       DIFF_FLUSHES       NUMBER,
+       CR_DLM_REQUESTS    NUMBER,
+       PR_DLM_REQUESTS    NUMBER,
+       DIFF_DLM_REQUESTS  NUMBER,
+       CR_DLM_CONFLICTS   NUMBER,
+       PR_DLM_CONFLICTS   NUMBER,
+       DIFF_DLM_CONFLICTS NUMBER,
+       CR_DLM_RELEASES    NUMBER,
+       PR_DLM_RELEASES    NUMBER,
+       DIFF_DLM_RELEASES  NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+DROP TABLE CLC_DELTA_SGA ;
+CREATE TABLE CLC_DELTA_SGA (
+       POINT_ID     NUMBER,
+       SNAP_LEVEL   NUMBER,
+       CR_SNAP_ID   NUMBER(6),
+       CR_SNAP_TIME DATE,
+       PR_SNAP_ID   NUMBER(6),
+       PR_SNAP_TIME DATE,
+       NAME         VARCHAR2(20),
+       CR_VALUE     NUMBER,
+       PR_VALUE     NUMBER,
+       DIFF_VALUE   NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+-- это упрощённая
+DROP TABLE CLC_POINT_SGA ;
+CREATE TABLE CLC_POINT_SGA (
+       POINT_ID     NUMBER,
+       SNAP_LEVEL   NUMBER,
+       CR_SNAP_ID   NUMBER(6),
+       CR_SNAP_TIME DATE,
+       NAME         VARCHAR2(20),
+       CR_VALUE     NUMBER,
+       STARTUP_TIME DATE,
+       PARALLEL     VARCHAR2(3),
+       VERSION      VARCHAR2(17) ) TABLESPACE BELSTAT COMPRESS ;
+
+-- POOL         VARCHAR2(12 изменено с 11),
+DROP TABLE CLC_DELTA_SGASTAT ;
+CREATE TABLE CLC_DELTA_SGASTAT (
+       POINT_ID     NUMBER,
+       SNAP_LEVEL   NUMBER,
+       CR_SNAP_ID   NUMBER(6),
+       CR_SNAP_TIME DATE,
+       PR_SNAP_ID   NUMBER(6),
+       PR_SNAP_TIME DATE,
+       POOL         VARCHAR2(12),
+       NAME         VARCHAR2(26),
+       CR_BYTES     NUMBER,
+       PR_BYTES     NUMBER,
+       DIFF_BYTES   NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+DROP TABLE CLC_DELTA_SHARED_POOL_ADVICE ;
+CREATE TABLE CLC_DELTA_SHARED_POOL_ADVICE (
+       POINT_ID                        NUMBER,
+       SNAP_LEVEL                      NUMBER,
+       CR_SNAP_ID                      NUMBER(6),
+       CR_SNAP_TIME                    DATE,
+       PR_SNAP_ID                      NUMBER(6),
+       PR_SNAP_TIME                    DATE,
+       SHARED_POOL_SIZE_FOR_ESTIMATE   NUMBER,
+       SHARED_POOL_SIZE_FACTOR         NUMBER,
+       CR_ESTD_LC_SIZE                 NUMBER,
+       PR_ESTD_LC_SIZE                 NUMBER,
+       DIFF_ESTD_LC_SIZE               NUMBER,
+       CR_ESTD_LC_MEMORY_OBJECTS       NUMBER,
+       PR_ESTD_LC_MEMORY_OBJECTS       NUMBER,
+       DIFF_ESTD_LC_MEMORY_OBJECTS     NUMBER,
+       CR_ESTD_LC_TIME_SAVED           NUMBER,
+       PR_ESTD_LC_TIME_SAVED           NUMBER,
+       DIFF_ESTD_LC_TIME_SAVED         NUMBER,
+       CR_ESTD_LC_TIME_SAVED_FACTOR    NUMBER,
+       PR_ESTD_LC_TIME_SAVED_FACTOR    NUMBER,
+       DIFF_ESTD_LC_TIME_SAVED_FACTOR  NUMBER,
+       CR_ESTD_LC_MEMORY_OBJECT_HITS   NUMBER,
+       PR_ESTD_LC_MEMORY_OBJECT_HITS   NUMBER,
+       DIFF_ESTD_LC_MEM_OBJECT_HITS NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+-- таблица для хранения данных по утилизации ТБС
+DROP TABLE CLC_TBS_UTILIZATION ;
+CREATE TABLE CLC_TBS_UTILIZATION (
+       POINT_ID         NUMBER,
+       CR_SNAP_TIME     DATE,
+       TABLESPACE_NAME  VARCHAR2(30),
+       STATUS           VARCHAR2(9),
+       CONTENTS         VARCHAR2(9),
+       TBS_FREE_IN      NUMBER,
+       TBS_USE          NUMBER,
+       TBS_MAY_INCREASE NUMBER,
+       TBS_AUTO_INCR    NUMBER,
+       TBS_FREE_ALL     NUMBER,
+       TBS_FREE_PERCENT NUMBER(5,2)) TABLESPACE BELSTAT COMPRESS ;
+
+DROP TABLE CLC_SEGMENTS_UTIL ;
+CREATE TABLE CLC_SEGMENTS_UTIL (
+       POINT_ID        NUMBER,
+       CR_SNAP_TIME    DATE,
+       OWNER           VARCHAR2(30),
+       SEGMENT_NAME    VARCHAR2(81),
+       PARTITION_NAME  VARCHAR2(30),
+       SEGMENT_TYPE    VARCHAR2(18),
+       TABLESPACE_NAME VARCHAR2(30),
+       HEADER_FILE     NUMBER,
+       HEADER_BLOCK    NUMBER,
+       BYTES           NUMBER,
+       BLOCKS          NUMBER,
+       EXTENTS         NUMBER,
+       INITIAL_EXTENT  NUMBER,
+       NEXT_EXTENT     NUMBER,
+       MIN_EXTENTS     NUMBER,
+       MAX_EXTENTS     NUMBER,
+       PCT_INCREASE    NUMBER,
+       FREELISTS       NUMBER,
+       FREELIST_GROUPS NUMBER,
+       RELATIVE_FNO    NUMBER,
+       BUFFER_POOL     VARCHAR2(7)) TABLESPACE BELSTAT COMPRESS ;
+
+DROP TABLE CLC_OS_PARTITION_UTIL ;
+CREATE TABLE CLC_OS_PARTITION_UTIL (
+       POINT_ID        NUMBER,
+       CR_SNAP_TIME    DATE,
+       FILESYSTEM      VARCHAR2(1024),
+       FSSIZE          NUMBER,
+       USED            NUMBER,
+       FREE            NUMBER,
+       FREPERCNT       NUMBER,
+       MOUNTPOINT      VARCHAR2(1024)) TABLESPACE BELSTAT COMPRESS ;
+
+-- таблица для суммарных таймингов ожиданий - одна строчка на срез
+DROP TABLE CLC_SUMEVENTS_TIMING ;
+CREATE TABLE CLC_SUMEVENTS_TIMING (
+       POINT_ID             NUMBER,
+       CR_SNAP_ID           NUMBER(6),
+       CR_SNAP_TIME         DATE,
+       PR_SNAP_ID           NUMBER(6),
+       PR_SNAP_TIME         DATE,
+       TOTAL_TIME_MICRO     NUMBER,
+       TOTAL_NOIDLE_WAIT    NUMBER,
+       TOTAL_NOIDLE_PRCNT   NUMBER,
+       QUEUE_WAIT_VAL       NUMBER,
+       QUEUE_WAIT_PRCNT     NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+DROP TABLE CLC_ARCHIVED_LOG ;
+CREATE TABLE CLC_ARCHIVED_LOG TABLESPACE BELSTAT COMPRESS AS 
+       SELECT * FROM V$ARCHIVED_LOG WHERE ROWNUM = 1 ;
+DELETE FROM CLC_ARCHIVED_LOG ;
+COMMIT ;
+
+DROP TABLE CLC_UNDOSTAT ;
+CREATE TABLE CLC_UNDOSTAT TABLESPACE BELSTAT COMPRESS AS 
+       SELECT * FROM V$UNDOSTAT WHERE ROWNUM = 1 ;
+DELETE FROM CLC_UNDOSTAT ;
+COMMIT ;
+
+DROP TABLE CLC_ANALITICA_POINTS ;
+CREATE TABLE CLC_ANALITICA_POINTS (
+-- общие переменные
+       POINT_ID               NUMBER,                                                                                                                         
+       SNAP_LEVEL             NUMBER,                                                                                                                         
+       CR_SNAP_ID             NUMBER(6),                                                                                                                      
+       CR_SNAP_TIME           DATE,                                                                                                                           
+       PR_SNAP_ID             NUMBER(6),                                                                                                                      
+       PR_SNAP_TIME           DATE, 
+-- CPU used by this session
+       CPU_USED_BTSES         NUMBER,
+       PARSE_TIME_CPU         NUMBER,
+       PARSE_TIME_ELAPSED     NUMBER,
+-- вывести информацию по разборам SQL
+       PARSE_COUNT_TOTAL      NUMBER,
+       PARSE_COUNT_HARD       NUMBER,
+-- вывести информацию по утилизации библиотечного кэша
+--#SUM NAMESPACE CLC_DELTA_LIBRARYCACHE
+       LIBCACHE_DIFF_GETS     NUMBER,                                                                                                               
+       LIBCACHE_DIFF_GETHITS  NUMBER,                                                                                                               
+       LIBCACHE_DIFF_PINS     NUMBER,                                                                                                               
+       LIBCACHE_DIFF_PINHITS  NUMBER,                                                                                                               
+       LIBCACHE_DIFF_RELOADS  NUMBER,                                                                                                               
+       LIBCACHE_DIFF_INVALIDT NUMBER,                                                                                                               
+-- транзакции и UNDO
+       EXECUTE_COUNT          NUMBER,
+       USER_CALLS             NUMBER,
+       USER_COMMITS           NUMBER,
+       USER_ROLLBACKS         NUMBER,
+       SUM_TRANS_COUNT        NUMBER,
+       SUM_UNDOBLOCKS         NUMBER,
+       AVG_UNDOBLOCKS         NUMBER,
+       MAX_UNDOBLOCKS         NUMBER,
+       MAX_TRANS_TIMELEN      NUMBER,
+       MAX_CONCURRENCY        NUMBER,
+-- вывести информацию по физическому вводу/выводу
+       PHYSICAL_READS         NUMBER,
+       PHYSICAL_RD_DIRECT     NUMBER,
+       PHYSICAL_RD_DIRLOB     NUMBER,
+       PHYSCL_RD_INTO_BFCACHE NUMBER,
+       PHYSICAL_WRITES        NUMBER,
+-- вывести информацию по логическому вводу/выводу
+       DB_BLOCK_GETS          NUMBER,
+       CONSISTENT_GETS        NUMBER,
+       SESSION_LOGICAL_READS  NUMBER,
+       DB_BLOCK_CHANGES       NUMBER,
+-- вывести информацию по утилизации кэша буферов. это вычисляемые позиции плюс
+       FREE_BUFFER_WAIT       NUMBER,
+       WRITE_COMPLETE_WAIT    NUMBER,
+       BUFFER_BUSY_WAIT       NUMBER,
+-- вывести информацию по утилизации буфера оперативных журналов
+       REDO_BUFF_ALLOC_ENTR   NUMBER,
+-- вывести информацию по вводу/выводу оперативных журналов
+       REDO_SIZE              NUMBER,
+       REDOLOG_AVG_PERMIN     NUMBER,
+       REDOLOG_MAX_PERMIN     NUMBER,
+-- вывести информацию по вводу/выводу архивных журналов
+       ARCHIVE_LOG_SIZE       NUMBER,
+-- вывести информацию по утилизации shared pool
+       FREEMEM_SHPL_START     NUMBER,
+       FREEMEM_SHPL_END       NUMBER,
+-- вывести информацию по утилизации резервного пула, пока это нули, ибо резервный пул не охватывается
+       SHPOOL_REQUEST_MISSES  NUMBER,
+       SHPOOL_REQUEST_FAIL    NUMBER,
+-- вывести информацию по утилизации кэша словаря, вычисляемый параметр, но для него нужно
+       DIC_DIFF_GETS          NUMBER,
+       DIC_DIFF_GETMISSES     NUMBER,
+       DIC_DIFF_MODIFICATIONS NUMBER,
+       DIC_DIFF_FLUSHES       NUMBER,
+-- вывести информацию по утилизации PGA
+       SORTS_MEMORY           NUMBER,
+       SORTS_DISK             NUMBER,
+       SORTS_OPTIMAL          NUMBER,
+       SORTS_ONEPASS          NUMBER,
+       SORTS_MULTIPASS        NUMBER,
+-- вывести информацию по сетевому вводу/выводу
+       GET_FROM_SQLNET        NUMBER,
+       SEND_TO_SQLNET         NUMBER,
+-- вывести информацию по дополнительным параметрам
+       PERIOD                 NUMBER,
+       LOGONS                 NUMBER ) TABLESPACE BELSTAT COMPRESS ;
+
+-- ##########################################################################################################
+-- ##########################################################################################################
+-- # объекты и процедуры "второй" очереди, дополняющей "первую" очередь коллектора статистик
+-- ##########################################################################################################
+-- ##########################################################################################################
+
+-- последовательность для нумерации статистических срезов
+DROP SEQUENCE BESTAT_SEQ_COLLE_POINTS ;
+CREATE SEQUENCE BESTAT_SEQ_COLLE_POINTS START WITH 1 INCREMENT BY 1 NOCYCLE NOCACHE ;
+-- последовательность для нумерации статистических диапазонов статистики в пределах одного старта инстанса для БД с одинаковой инкарнацией
+DROP SEQUENCE BESTAT_SEQ_COLLE_STATS_RANGE ;
+CREATE SEQUENCE BESTAT_SEQ_COLLE_STATS_RANGE START WITH 1 INCREMENT BY 1 NOCYCLE NOCACHE ;
+-- таблица нумерации статистических срезов
+DROP table BESTAT_COLLECTOR_POINTS ;
+create table BESTAT_COLLECTOR_POINTS (
+       POINT_ID NUMBER, STAT_RANGE_ID NUMBER, POINT_TYPE VARCHAR(10), LOCK_TYPE VARCHAR(10), RESETLOGS_CHANGE# NUMBER, RESETLOGS_TIME DATE, 
+       START_INSTANCE DATE, STAMP_RECORD DATE, COMMENTS VARCHAR(250) ) ;
+
+-- ####################################################################################################################################
+-- таблицы конфигурации и статистики экземпляра 
+-- ####################################################################################################################################
+-- таблица срезов статистик сессий
+DROP table BESTAT_SESSION_STATS ; 
+create table BESTAT_SESSION_STATS ( POINT NUMBER, SID NUMBER, STATISTIC# NUMBER, VALUE NUMBER ) ;
+-- таблица срезов статистик экземпляра
+DROP table BESTAT_SYSTEM_STATS ;
+create table BESTAT_SYSTEM_STATS ( POINT NUMBER, STATISTIC# NUMBER, NAME VARCHAR2(64), CLASS NUMBER, VALUE NUMBER ) ;
+-- таблица срезов событий сессий
+DROP table BESTAT_SESSION_EVENTS ;
+create table BESTAT_SESSION_EVENTS ( POINT NUMBER, SID NUMBER, EVENT VARCHAR2(64), TOTAL_WAITS NUMBER, TOTAL_TIMEOUTS NUMBER, 
+       TIME_WAITED NUMBER, AVERAGE_WAIT NUMBER, MAX_WAIT NUMBER, TIME_WAITED_MICRO NUMBER ) ;
+-- таблица срезов событий экземпляра
+DROP table BESTAT_SYSTEM_EVENTS ;
+create table BESTAT_SYSTEM_EVENTS ( POINT NUMBER, EVENT VARCHAR2(64), TOTAL_WAITS NUMBER, TOTAL_TIMEOUTS NUMBER, 
+       TIME_WAITED NUMBER, AVERAGE_WAIT NUMBER, TIME_WAITED_MICRO NUMBER ) ;
+-- таблица срезов ожиданий сессий
+DROP table BESTAT_SESSION_WAITS ;
+create table BESTAT_SESSION_WAITS ( POINT NUMBER, SID NUMBER, SEQ# NUMBER, EVENT VARCHAR2(64), P1TEXT VARCHAR2(64), 
+       P1 NUMBER, P1RAW RAW(8), P2TEXT VARCHAR2(64), P2 NUMBER, P2RAW RAW(8), P3TEXT VARCHAR2(64), P3 NUMBER, P3RAW RAW(8),
+       WAIT_TIME NUMBER, SECONDS_IN_WAIT NUMBER, STATE VARCHAR2(19) ) ;
+-- таблица срезов сессий
+DROP table BESTAT_SESSIONS ;
+create table BESTAT_SESSIONS ( POINT NUMBER, SADDR RAW(4), SID NUMBER, SERIAL# NUMBER, AUDSID NUMBER, PADDR RAW(4), USER# NUMBER, USERNAME VARCHAR2(30), 
+ COMMAND NUMBER, OWNERID NUMBER, TADDR VARCHAR2(8), LOCKWAIT VARCHAR2(8), STATUS VARCHAR2(8), SERVER VARCHAR2(9), SCHEMA# NUMBER, SCHEMANAME VARCHAR2(30), 
+ OSUSER VARCHAR2(30), PROCESS VARCHAR2(12), MACHINE VARCHAR2(64), TERMINAL VARCHAR2(30), PROGRAM VARCHAR2(48), TYPE VARCHAR2(10), SQL_ADDRESS RAW(4), 
+ SQL_HASH_VALUE NUMBER, PREV_SQL_ADDR RAW(4), PREV_HASH_VALUE NUMBER, MODULE VARCHAR2(48), MODULE_HASH NUMBER, ACTION VARCHAR2(32), ACTION_HASH NUMBER, 
+ CLIENT_INFO VARCHAR2(64), FIXED_TABLE_SEQUENCE NUMBER, ROW_WAIT_OBJ# NUMBER, ROW_WAIT_FILE# NUMBER, ROW_WAIT_BLOCK# NUMBER, ROW_WAIT_ROW# NUMBER, 
+ LOGON_TIME DATE, LAST_CALL_ET NUMBER, PDML_ENABLED VARCHAR2(3), FAILOVER_TYPE VARCHAR2(13), FAILOVER_METHOD VARCHAR2(10), FAILED_OVER VARCHAR2(3), 
+ RESOURCE_CONSUMER_GROUP VARCHAR2(32), PDML_STATUS VARCHAR2(8), PDDL_STATUS VARCHAR2(8), PQ_STATUS VARCHAR2(8), CURRENT_QUEUE_DURATION NUMBER,
+ CLIENT_IDENTIFIER VARCHAR2(64) ) ;
+-- таблица срезов серверных процессов
+DROP table BESTAT_PROCESSES ;
+create table BESTAT_PROCESSES ( POINT NUMBER, ADDR RAW(4), PID NUMBER, SPID VARCHAR2(12), USERNAME VARCHAR2(15), SERIAL# NUMBER, TERMINAL VARCHAR2(30), 
+       PROGRAM VARCHAR2(48), TRACEID VARCHAR2(255), BACKGROUND VARCHAR2(1), LATCHWAIT VARCHAR2(8), LATCHSPIN VARCHAR2(8), PGA_USED_MEM NUMBER, 
+       PGA_ALLOC_MEM NUMBER, PGA_FREEABLE_MEM NUMBER, PGA_MAX_MEM NUMBER ) ;
+-- таблица срезов данных о TC из контролфайла
+DROP TABLE BESTAT_V$TABLESPACE ;
+CREATE TABLE BESTAT_V$TABLESPACE ( POINT NUMBER, TS# NUMBER, NAME VARCHAR2(30), INCLUDED_IN_DATABASE_BACKUP VARCHAR2(3)) ;
+-- таблица срезов данных о ТС из словаря
+DROP TABLE BESTAT_DBA_TABLESPACES ;
+CREATE TABLE BESTAT_DBA_TABLESPACES ( POINT NUMBER, TABLESPACE_NAME VARCHAR2(30), BLOCK_SIZE NUMBER, INITIAL_EXTENT NUMBER, NEXT_EXTENT NUMBER, 
+       MIN_EXTENTS NUMBER, MAX_EXTENTS NUMBER, PCT_INCREASE NUMBER, MIN_EXTLEN NUMBER, STATUS VARCHAR2(9), CONTENTS VARCHAR2(9), LOGGING VARCHAR2(9), 
+       FORCE_LOGGING VARCHAR2(3), EXTENT_MANAGEMENT VARCHAR2(10), ALLOCATION_TYPE VARCHAR2(9), PLUGGED_IN VARCHAR2(3), 
+       SEGMENT_SPACE_MANAGEMENT VARCHAR2(6), DEF_TAB_COMPRESSION VARCHAR2(8)) ;
+-- таблица срезов данных о свободном месте в файлах данных
+DROP TABLE BESTAT_DBA_FREE_SPACE ;
+CREATE TABLE BESTAT_DBA_FREE_SPACE ( POINT NUMBER, TABLESPACE_NAME VARCHAR2(30), FILE_ID NUMBER, BLOCK_ID NUMBER, BYTES NUMBER, BLOCKS NUMBER, 
+       RELATIVE_FNO NUMBER ) ;
+-- таблица срезов данных о файлах данных из контролфайла
+DROP  TABLE BESTAT_V$DATAFILE ;
+CREATE TABLE BESTAT_V$DATAFILE ( POINT NUMBER, FILE# NUMBER, CREATION_CHANGE# NUMBER, CREATION_TIME DATE, TS# NUMBER, RFILE# NUMBER, STATUS VARCHAR2(7),
+ ENABLED VARCHAR2(10), CHECKPOINT_CHANGE# NUMBER, CHECKPOINT_TIME DATE, UNRECOVERABLE_CHANGE# NUMBER, UNRECOVERABLE_TIME DATE, LAST_CHANGE# NUMBER,
+ LAST_TIME DATE, OFFLINE_CHANGE# NUMBER, ONLINE_CHANGE# NUMBER, ONLINE_TIME DATE, BYTES NUMBER, BLOCKS NUMBER, CREATE_BYTES NUMBER, BLOCK_SIZE NUMBER,
+ NAME VARCHAR2(513), PLUGGED_IN NUMBER, BLOCK1_OFFSET NUMBER, AUX_NAME VARCHAR2(513) ) ;
+-- таблица срезов данных о файлах данных из словаря
+DROP TABLE BESTAT_DBA_DATA_FILES ;
+CREATE TABLE BESTAT_DBA_DATA_FILES ( POINT NUMBER, FILE_NAME VARCHAR2(513), FILE_ID NUMBER, TABLESPACE_NAME VARCHAR2(30), BYTES NUMBER, BLOCKS NUMBER,
+ STATUS VARCHAR2(9), RELATIVE_FNO NUMBER, AUTOEXTENSIBLE VARCHAR2(3), MAXBYTES NUMBER, MAXBLOCKS NUMBER, INCREMENT_BY NUMBER, USER_BYTES NUMBER,
+ USER_BLOCKS NUMBER ) ;
+-- таблица срезов данных о временных файлах из контролфайла
+DROP TABLE BESTAT_V$TEMPFILE ;
+CREATE TABLE BESTAT_V$TEMPFILE ( POINT NUMBER, FILE# NUMBER, CREATION_CHANGE# NUMBER, CREATION_TIME DATE, TS# NUMBER, RFILE# NUMBER, STATUS VARCHAR2(7),
+ ENABLED VARCHAR2(10), BYTES NUMBER, BLOCKS NUMBER, CREATE_BYTES NUMBER, BLOCK_SIZE NUMBER, NAME VARCHAR2(513)) ;
+-- таблица срезов данных о временных файлах из словаря
+DROP TABLE BESTAT_DBA_TEMP_FILES ;
+CREATE TABLE BESTAT_DBA_TEMP_FILES ( POINT NUMBER, FILE_NAME VARCHAR2(513), FILE_ID NUMBER, TABLESPACE_NAME VARCHAR2(30), BYTES NUMBER, 
+       BLOCKS NUMBER, STATUS CHAR(9), RELATIVE_FNO NUMBER, AUTOEXTENSIBLE VARCHAR2(3), MAXBYTES NUMBER, MAXBLOCKS NUMBER, INCREMENT_BY NUMBER, 
+       USER_BYTES NUMBER, USER_BLOCKS NUMBER ) ;
+-- таблица срезов данных о статистике файлов данных и временных файлов. Последующий расчёт дельт за период и вычисление веса значений
+-- каждого сегмента от общей суммы позволяет выделить горячие сегменты и косвенно - горячие блоки, о чём запланирован отдельный аналитический модуль
+DROP TABLE BESTAT_V$FILESTAT ;
+CREATE TABLE BESTAT_V$FILESTAT ( POINT NUMBER, FILE# NUMBER, PHYRDS NUMBER, PHYWRTS NUMBER, PHYBLKRD NUMBER, PHYBLKWRT NUMBER, SINGLEBLKRDS NUMBER, 
+       READTIM NUMBER, WRITETIM NUMBER, SINGLEBLKRDTIM NUMBER, AVGIOTIM NUMBER, LSTIOTIM NUMBER, MINIOTIM NUMBER, MAXIORTM NUMBER, MAXIOWTM NUMBER ) ;
+-- таблица срезов даных о статистике сегментов. Последующий расчёт дельт за период и вычисление веса значений каждого сегмента от общей суммы
+-- позволяет выделить горячие сегменты и косвенно - горячие блоки, о чём запланирован отдельный аналитический модуль
+DROP TABLE BESTAT_V$SEGSTAT ;
+CREATE TABLE BESTAT_V$SEGSTAT ( POINT NUMBER, TS# NUMBER, OBJ# NUMBER, DATAOBJ# NUMBER, STATISTIC_NAME VARCHAR2(64), STATISTIC# NUMBER, VALUE NUMBER ) ;
+
+-- для эмуляции статистик первой очереди, если таки потребуется, нужно добавить таблицы срезов 
+-- library_cache,buff_pool_stat, sga_stat, raw_cache
+-- а также отдельные срезы по представлениям SQL запросов (v$sql, v$sql_area, v$sql_plan, v$sqltext)
+
+-- ####################################################################################################################################
+-- таблицы объектной статистики (имеют существенно больший объем и по природе своей требуют более редкого сбора срезов
+-- ####################################################################################################################################
+DROP TABLE BESTAT_DBA_OBJECTS ;
+CREATE TABLE BESTAT_DBA_OBJECTS ( POINT NUMBER, OWNER VARCHAR2(30), OBJECT_NAME VARCHAR2(128), SUBOBJECT_NAME VARCHAR2(30), OBJECT_ID NUMBER, DATA_OBJECT_ID NUMBER,
+       OBJECT_TYPE VARCHAR2(18), CREATED DATE, LAST_DDL_TIME DATE, TIMESTAMP VARCHAR2(19), STATUS VARCHAR2(7), TEMPORARY VARCHAR2(1),
+       GENERATED VARCHAR2(1), SECONDARY VARCHAR2(1) ) ;
+DROP TABLE BESTAT_DBA_SEGMENTS ;
+CREATE TABLE BESTAT_DBA_SEGMENTS ( POINT NUMBER, OWNER VARCHAR2(30), SEGMENT_NAME VARCHAR2(81), PARTITION_NAME VARCHAR2(30), SEGMENT_TYPE VARCHAR2(18),
+       TABLESPACE_NAME VARCHAR2(30), HEADER_FILE NUMBER, HEADER_BLOCK NUMBER, BYTES NUMBER, BLOCKS NUMBER, EXTENTS NUMBER, INITIAL_EXTENT NUMBER,
+       NEXT_EXTENT NUMBER, MIN_EXTENTS NUMBER, MAX_EXTENTS NUMBER, PCT_INCREASE NUMBER, FREELISTS NUMBER, FREELIST_GROUPS NUMBER, RELATIVE_FNO NUMBER,
+       BUFFER_POOL VARCHAR2(7) ) ;
+
+-- таблица срезов данных об утилизации размера табличных пространств - УСТАРЕЛА, ИСПОЛЬЗУЕТСЯ РАСЧЁТ СРЕЗОВ ДОПОЛНИТЕЛЬНОЙ ОПЕРАТИВНОЙ СТАТИСТИКИ BESTAT
+DROP TABLE BESTAT_TBS_SIZE ;
+CREATE TABLE BESTAT_TBS_SIZE ( POINT NUMBER, TABLESPACE_NAME VARCHAR2(30), FREE_BYTES NUMBER, USED_BYTES NUMBER, AE_ALL_BYTES NUMBER, AE_FREE_BYTES NUMBER, FREE_ALL_BYTES NUMBER, FREE_PERCENT NUMBER ) ;
+
+-- таблица срезов данных об утилизации партиций операционной системы - на будущее
+/*
+DROP TABLE BESTAT_DISK_PARTITION ;
+CREATE TABLE BESTAT_DISK_PARTITION ( POINT NUMBER, ) ;
+*/
+
+-- таблица срезов данных SQLAREA (выверено для 10 версии движка, должно работать и в 11)
+DROP TABLE BESTAT_SQLAREA ;
+CREATE TABLE BESTAT_SQLAREA ( POINT_ID NUMBER, SQL_TEXT VARCHAR2(1000), SQL_FULLTEXT CLOB, SQL_ID VARCHAR2(13), SHARABLE_MEM NUMBER, PERSISTENT_MEM NUMBER,
+       RUNTIME_MEM NUMBER, SORTS NUMBER, VERSION_COUNT NUMBER, LOADED_VERSIONS NUMBER, OPEN_VERSIONS NUMBER, USERS_OPENING NUMBER, FETCHES NUMBER,
+       EXECUTIONS NUMBER, PX_SERVERS_EXECUTIONS NUMBER, END_OF_FETCH_COUNT NUMBER, USERS_EXECUTING NUMBER, LOADS NUMBER, FIRST_LOAD_TIME VARCHAR2(76),
+       INVALIDATIONS NUMBER, PARSE_CALLS NUMBER, DISK_READS NUMBER, DIRECT_WRITES NUMBER, BUFFER_GETS NUMBER, APPLICATION_WAIT_TIME NUMBER, 
+       CONCURRENCY_WAIT_TIME NUMBER, CLUSTER_WAIT_TIME NUMBER, USER_IO_WAIT_TIME NUMBER, PLSQL_EXEC_TIME NUMBER, JAVA_EXEC_TIME NUMBER,
+       ROWS_PROCESSED NUMBER, COMMAND_TYPE NUMBER, OPTIMIZER_MODE VARCHAR2(10), OPTIMIZER_COST NUMBER, OPTIMIZER_ENV RAW(2000),
+       OPTIMIZER_ENV_HASH_VALUE NUMBER, PARSING_USER_ID NUMBER, PARSING_SCHEMA_ID NUMBER, PARSING_SCHEMA_NAME VARCHAR2(30), KEPT_VERSIONS NUMBER,
+       ADDRESS RAW(4), HASH_VALUE NUMBER, OLD_HASH_VALUE NUMBER, PLAN_HASH_VALUE NUMBER, MODULE VARCHAR2(64), MODULE_HASH NUMBER, ACTION VARCHAR2(64),
+       ACTION_HASH NUMBER, SERIALIZABLE_ABORTS NUMBER, OUTLINE_CATEGORY VARCHAR2(64), CPU_TIME NUMBER, ELAPSED_TIME NUMBER, OUTLINE_SID VARCHAR2(40),
+       LAST_ACTIVE_CHILD_ADDRESS RAW(4), REMOTE VARCHAR2(1), OBJECT_STATUS VARCHAR2(19), LITERAL_HASH_VALUE NUMBER, LAST_LOAD_TIME DATE,
+       IS_OBSOLETE VARCHAR2(1), CHILD_LATCH NUMBER, SQL_PROFILE VARCHAR2(64), PROGRAM_ID NUMBER, PROGRAM_LINE# NUMBER, EXACT_MATCHING_SIGNATURE NUMBER,
+       FORCE_MATCHING_SIGNATURE NUMBER, LAST_ACTIVE_TIME DATE, BIND_DATA RAW(2000) ) ;
+CREATE INDEX BESTAT_SQLAREA_I1 ON BESTAT_SQLAREA(POINT_ID) ;
+
+-- таблица дельт по SQLAREA (выверено для 10 версии движка, должно работать и в 11)
+DROP TABLE BESTAT_DELTA_SQLAREA ;
+CREATE TABLE BESTAT_DELTA_SQLAREA ( CR_POINT_ID NUMBER, CR_STAMP_RECORD DATE, PR_POINT_ID NUMBER, PR_STAMP_RECORD DATE,
+       CR_SQL_ID VARCHAR2(13),PR_SQL_ID VARCHAR2(13), CR_PLAN_HASH_VALUE NUMBER, PR_PLAN_HASH_VALUE NUMBER,
+       CR_PARSING_USER_ID NUMBER, PR_PARSING_USER_ID NUMBER, CR_MODULE VARCHAR2(64), PR_MODULE VARCHAR2(64),
+       CR_ACTION VARCHAR2(64), PR_ACTION VARCHAR2(64),
+       CR_SHARABLE_MEM NUMBER,PR_SHARABLE_MEM NUMBER,DIFF_SHARABLE_MEM NUMBER, 
+       CR_PERSISTENT_MEM NUMBER, PR_PERSISTENT_MEM NUMBER, DIFF_PERSISTENT_MEM NUMBER, 
+       CR_RUNTIME_MEM NUMBER, PR_RUNTIME_MEM NUMBER, DIFF_RUNTIME_MEM NUMBER, 
+       CR_SORTS NUMBER, PR_SORTS NUMBER, DIFF_SORTS NUMBER, 
+       CR_USERS_OPENING NUMBER, PR_USERS_OPENING NUMBER, DIFF_USERS_OPENING NUMBER, 
+       CR_FETCHES NUMBER, PR_FETCHES NUMBER, DIFF_FETCHES NUMBER,
+       CR_EXECUTIONS NUMBER, PR_EXECUTIONS NUMBER, DIFF_EXECUTIONS NUMBER,
+       CR_PX_SERVERS_EXECUTIONS NUMBER, PR_PX_SERVERS_EXECUTIONS NUMBER, DIFF_PX_SERVERS_EXECUTIONS NUMBER,
+       CR_END_OF_FETCH_COUNT NUMBER, PR_END_OF_FETCH_COUNT NUMBER, DIFF_END_OF_FETCH_COUNT NUMBER,
+       CR_USERS_EXECUTING NUMBER, PR_USERS_EXECUTING NUMBER, DIFF_USERS_EXECUTING NUMBER,
+       CR_LOADS NUMBER, PR_LOADS NUMBER, DIFF_LOADS NUMBER,
+       CR_INVALIDATIONS NUMBER, PR_INVALIDATIONS NUMBER, DIFF_INVALIDATIONS NUMBER,
+       CR_PARSE_CALLS NUMBER, PR_PARSE_CALLS NUMBER, DIFF_PARSE_CALLS NUMBER,
+       CR_DISK_READS NUMBER, PR_DISK_READS NUMBER, DIFF_DISK_READS NUMBER,
+       CR_DIRECT_WRITES NUMBER, PR_DIRECT_WRITES NUMBER, DIFF_DIRECT_WRITES NUMBER,
+       CR_BUFFER_GETS NUMBER, PR_BUFFER_GETS NUMBER, DIFF_BUFFER_GETS NUMBER,
+       CR_APPLICATION_WAIT_TIME NUMBER, PR_APPLICATION_WAIT_TIME NUMBER, DIFF_APPLICATION_WAIT_TIME NUMBER,
+       CR_CONCURRENCY_WAIT_TIME NUMBER, PR_CONCURRENCY_WAIT_TIME NUMBER, DIFF_CONCURRENCY_WAIT_TIME NUMBER,
+       CR_CLUSTER_WAIT_TIME NUMBER, PR_CLUSTER_WAIT_TIME NUMBER, DIFF_CLUSTER_WAIT_TIME NUMBER,
+       CR_USER_IO_WAIT_TIME NUMBER, PR_USER_IO_WAIT_TIME NUMBER, DIFF_USER_IO_WAIT_TIME NUMBER,
+       CR_PLSQL_EXEC_TIME NUMBER, PR_PLSQL_EXEC_TIME NUMBER, DIFF_PLSQL_EXEC_TIME NUMBER,
+       CR_JAVA_EXEC_TIME NUMBER, PR_JAVA_EXEC_TIME NUMBER, DIFF_JAVA_EXEC_TIME NUMBER,
+       CR_ROWS_PROCESSED NUMBER, PR_ROWS_PROCESSED NUMBER, DIFF_ROWS_PROCESSED NUMBER,
+       CR_SERIALIZABLE_ABORTS NUMBER, PR_SERIALIZABLE_ABORTS NUMBER, DIFF_SERIALIZABLE_ABORTS NUMBER,
+       CR_CPU_TIME NUMBER, PR_CPU_TIME NUMBER, DIFF_CPU_TIME NUMBER,
+       CR_ELAPSED_TIME NUMBER, PR_ELAPSED_TIME NUMBER, DIFF_ELAPSED_TIME NUMBER,
+       CR_CHILD_LATCH NUMBER, PR_CHILD_LATCH NUMBER, DIFF_CHILD_LATCH NUMBER, CR_OPTIMIZER_COST NUMBER, PR_OPTIMIZER_COST NUMBER ) ;
+CREATE INDEX BESTAT_DELTA_SQLAREA_I1 ON BESTAT_DELTA_SQLAREA(CR_POINT_ID) ;
+
+DROP TABLE BESTAT_V$SQL_PLAN ;
+CREATE TABLE BESTAT_V$SQL_PLAN AS
+       SELECT TO_NUMBER(999999999999) POINT_ID,p.* FROM V$SQL_PLAN p WHERE ROWNUM = 1 ;
+DELETE FROM BESTAT_V$SQL_PLAN ;
+COMMIT ;
+DROP TABLE BESTAT_V$SQLTEXT_WITH_NEWLINES ;
+CREATE TABLE BESTAT_V$SQLTEXT_WITH_NEWLINES AS
+       SELECT TO_NUMBER(999999999999) POINT_ID,t.* FROM V$SQLTEXT_WITH_NEWLINES t WHERE ROWNUM = 1 ;
+DELETE FROM BESTAT_V$SQLTEXT_WITH_NEWLINES ;
+COMMIT ;
+
+show errors
+spool off ;
+exit ;

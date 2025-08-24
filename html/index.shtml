@@ -1,0 +1,14 @@
+<HTML><HEAD><BASE HREF="http://oracle.zerot.ru/">
+<META HTTP-EQUIV=Content-Type content="text/html; charset=windows-1251">
+<META HTTP-EQUIV=Content-Script-Type content="text/javascript">
+<META HTTP-EQUIV="Style-Type" content="text/css">
+<LINK REL=STYLESHEET HREF="http://oracle.zerot.ru/css/frst.css">
+<META NAME="keywords" CONTENT="Oracle monitor">                                                                                                             <META NAME="description" CONTENT="Oracle monitor">
+
+<TITLE>Oracle monitor</TITLE></HEAD>
+<FRAMESET COLS="22%,*">
+ <FRAME FRAMEBORDER="0" NAME="menu" SCROLLING="auto" NORESIZE src="menu.shtml">
+ <FRAME  FRAMEBORDER="0" NAME="cont" SCROLLING="yes" src="data_now.shtml">
+ <NOFRAMES>Эта страница разработана для работы поддерживающих фрэймы клиентов</NOFRAMES>
+</FRAMESET>
+</HTML>
